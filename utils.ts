@@ -6,11 +6,11 @@ import { normalize } from "path";
  * - Are highly collision-resistant
  * - Work in all modern browsers
  *
- * @param length Desired ID length (default: 21)
+ * @param length Desired ID length (default: 24)
  * @param alphabet Optional custom alphabet string (default: BASE62)
  * @returns A DOM-safe unique ID starting with a letter
  */
-export function nanoid(size = 21, alphabet?: string): string {
+export function nanoid(size = 24, alphabet?: string): string {
     const chars = alphabet ?? "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const bytes = crypto.getRandomValues(new Uint8Array(size));
 
