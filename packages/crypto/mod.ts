@@ -5,14 +5,14 @@ function encodeBase64(data: Uint8Array | ArrayBuffer): string {
     return btoa(binary);
 }
 
-function decodeBase64(str: string): Uint8Array {
+function decodeBase64(str: string): Uint8Array<ArrayBuffer> {
     const binary = atob(str);
-    const bytes = new Uint8Array(binary.length);
+    const bytes = new Uint8Array(binary.length) as Uint8Array<ArrayBuffer>;
     for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
     return bytes;
 }
 
-const textEncode = (s: string) => new TextEncoder().encode(s);
+const textEncode = (s: string): Uint8Array<ArrayBuffer> => new TextEncoder().encode(s) as Uint8Array<ArrayBuffer>;
 const textDecode = (u: Uint8Array) => new TextDecoder().decode(u);
 
 const importAesKey = async (key: string) => {
@@ -30,7 +30,7 @@ export async function sha1(message: string): Promise<string> {
 
 export const AES: any = {
     async encrypt(plaintext: string, key: string) {
-        const iv = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
         const encrypted = await crypto.subtle.encrypt(
             { name: "AES-CBC", iv },
             await importAesKey(key),
