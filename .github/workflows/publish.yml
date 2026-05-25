@@ -16,5 +16,5 @@ jobs:
         run: |
           for pkg in packages/*/; do
             echo "Publishing ${pkg%/}..."
-            (cd "$pkg" && npx jsr publish --no-check)
+            (cd "$pkg" && npx jsr publish --no-check --token "${{ secrets.JSR_TOKEN }}")
           done
