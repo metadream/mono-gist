@@ -1,3 +1,4 @@
+/** Generate a random string ID. Default length is 24 characters (alphanumeric). */
 export function nanoid(size = 24, alphabet?: string): string {
     const chars = alphabet ?? "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const bytes = crypto.getRandomValues(new Uint8Array(size));
@@ -9,6 +10,7 @@ export function nanoid(size = 24, alphabet?: string): string {
     return id;
 }
 
+/** Normalize a file path: convert backslashes to forward slashes, resolve `..` and `.`, remove empty segments. */
 export function normalizePath(path: string): string {
     const parts = path.replace(/\\/g, "/").split("/");
     const result: string[] = [];
@@ -27,6 +29,7 @@ export function normalizePath(path: string): string {
     return result.join("/");
 }
 
+/** Validate a file/folder path (checks length, illegal characters, reserved names, trailing space/dot). */
 export function isValidPath(path: string): boolean {
     if (!path || path.trim() === "" || path.length > 255) return false;
 
@@ -44,11 +47,13 @@ export function isValidPath(path: string): boolean {
     return true;
 }
 
+/** Random integer in [`a`, `b`). If `a > b` they are swapped. */
 export function randomInt(a: number, b: number): number {
     b = b > a ? b : a;
     return Math.floor(Math.random() * (b - a) + a);
 }
 
+/** Return a random sample of unique integers in [`origin`, `bound`). */
 export function randomSample(origin: number, bound: number, size: number): number[] {
     const maxAvailable = Math.max(0, bound - origin);
     const actualSize = Math.min(size, maxAvailable);
@@ -57,20 +62,24 @@ export function randomSample(origin: number, bound: number, size: number): numbe
     return [...res];
 }
 
+/** Shuffle an array in place (Fisher-Yates style, using sort). Returns the same array reference. */
 export function shuffle(array: Array<unknown>): unknown[] {
     return array.sort(() => Math.random() - 0.5);
 }
 
+/** Capitalize the first letter of each word in a string. */
 export function firstUpperCase(text: string): string {
     return text.toLowerCase().replace(/( |^)[a-z]/g, (L) => L.toUpperCase());
 }
 
+/** Strip HTML tags from a string, optionally preserving certain tags. */
 export function stripHtml(html: string, ignoredTags: Array<string> = []): string {
     ignoredTags.push(" ");
     const tags = ignoredTags.join("|");
     return html.replace(new RegExp("<(?!\/?(" + tags + ")\\b)[^<>]+>", "gm"), "").replace(/([\r\n]+ +)+/gm, "");
 }
 
+/** Truncate text by visual width where CJK characters count as 2. */
 export function truncate(text: string, length: number): string {
     const cnRegex = /[^\\x00-\\xff]/g;
 
@@ -86,6 +95,7 @@ export function truncate(text: string, length: number): string {
     return text;
 }
 
+/** Check whether a value is a plain Object (not a class instance, not null). */
 export function isPlainObject(value: unknown): boolean {
     if (!value || typeof value !== "object" || Object.prototype.toString.call(value) != "[object Object]") {
         return false;
@@ -100,6 +110,7 @@ export function isPlainObject(value: unknown): boolean {
     return Object.getPrototypeOf(value) === proto;
 }
 
+/** Replace `{0}`, `{1}` (or `{key}`) placeholders in a pattern with values from an array or object. */
 export function formatString(pattern: string, args: Array<string> | Record<string, string>): string {
     if (Array.isArray(args)) {
         for (let i = 0; i < args.length; i++) {
@@ -113,6 +124,7 @@ export function formatString(pattern: string, args: Array<string> | Record<strin
     return pattern;
 }
 
+/** Format a byte count as a human-readable string (e.g. `"1.5 MB"`). */
 export function formatBytes(bytes: number): string {
     if (!bytes || bytes < 1) return "0";
     const unit = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
@@ -121,6 +133,7 @@ export function formatBytes(bytes: number): string {
     return parseFloat((bytes / Math.pow(1024, base)).toFixed(scale)) + " " + unit[base];
 }
 
+/** Format a date with tokens: `yyyy`, `yy`, `MM`, `M`, `dd`, `d`, `HH`, `H`, `hh`, `h`, `mm`, `m`, `ss`, `s`, `SSS`, `S`, `a`. */
 export function formatDate(date: Date | string | number, pattern: string): string {
     const d = date instanceof Date ? date : new Date(date);
     if (isNaN(d.getTime())) throw new Error("Invalid date");
@@ -155,6 +168,7 @@ export function formatDate(date: Date | string | number, pattern: string): strin
         .replace(/a/g, ampm);
 }
 
+/** Format a duration in seconds to a human-readable string (e.g. `"1d 2h 30m 15s"`). */
 export function formatSeconds(seconds: number): string {
     const d = Math.floor(seconds / 86400);
     const h = Math.floor((seconds % 86400) / 3600);
@@ -168,6 +182,7 @@ export function formatSeconds(seconds: number): string {
     ).trim();
 }
 
+/** Format milliseconds to `"HH:MM:SS.mmm"`. */
 export function formatDuration(n: number, options?: { leading?: boolean; ms?: boolean }): string {
     const ms = Math.trunc(n) % 1000;
     const seconds = Math.trunc(n / 1000) % 60;
@@ -188,6 +203,7 @@ export function formatDuration(n: number, options?: { leading?: boolean; ms?: bo
     return result;
 }
 
+/** Parse `"HH:MM:SS.mmm"` to milliseconds. Returns `0` for invalid input. */
 export function parseDuration(s: string): number {
     if (!s) return 0;
     const m = s.trim().match(/^(\d{2}):(\d{2}):(\d{2})(\.\d{1,3})?$/);
@@ -202,6 +218,7 @@ export function parseDuration(s: string): number {
     return (hours * 60 + minutes) * 60 + seconds + ms;
 }
 
+/** Custom locale-aware comparator: symbols < digits < letters < other. Respects locale for CJK character ordering. */
 export function localeCompare(aStr: string, bStr: string, locale = "zh"): number {
     const regExp = [/[\s\~\!\@\#\$\%\^\&\*\(\)\-\_\+\=\{\}\[\]\|\<\>\,\.\?\/\\]/, /[0-9]/, /[a-zA-Z]/, /./];
 
@@ -231,6 +248,7 @@ export function localeCompare(aStr: string, bStr: string, locale = "zh"): number
     return aStr.length - bStr.length;
 }
 
+/** Deep-merge multiple plain objects. Later objects override earlier ones. */
 export function mergeObjects(...objs: Array<any>): unknown {
     const result: any = {};
     objs.forEach((obj) => {
@@ -246,6 +264,7 @@ export function mergeObjects(...objs: Array<any>): unknown {
     return result;
 }
 
+/** Merge two arrays by matching items with a callback. Items from `arr1` take priority on conflict. */
 export function mergeArrays(arr1: any[], arr2: any[], callback: Function): unknown[] {
     const merged: Array<any> = [];
     const clone = [...arr2];
@@ -259,6 +278,7 @@ export function mergeArrays(arr1: any[], arr2: any[], callback: Function): unkno
     return merged;
 }
 
+/** Swap two elements in an array in place. Returns the same array reference. */
 export function swapArray(arr: unknown[], index1: number, index2: number): unknown[] {
     arr[index1] = arr.splice(index2, 1, arr[index1])[0];
     return arr;
