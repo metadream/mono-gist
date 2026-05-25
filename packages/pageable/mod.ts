@@ -24,6 +24,7 @@ function compact(totalPages: number, pageNumber: number, around = 2): number[] {
     return [1, 0, ...Array.from({ length: around * 2 + 1 }, (_, i) => pageNumber - around + i), 0, totalPages];
 }
 
+/** Pagination metadata computed by {@link paginate}. */
 export interface Paging {
     totalSize: number;
     totalPages: number;
@@ -35,6 +36,7 @@ export interface Paging {
     results?: any[];
 }
 
+/** Compute pagination metadata. Page numbers are 1-based. */
 export function paginate(totalSize: number, pageSize: number, pageNumber = 1): Paging {
     const totalPages = Math.ceil(totalSize / pageSize);
     const compactPages = compact(totalPages, pageNumber);
