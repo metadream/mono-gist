@@ -46,6 +46,10 @@ async function readTextFile(path: string) {
  * @Author Marco
  * @Since 2022-11-09
  */
+/**
+ * Tiny Mustache-like template engine.
+ * Supports partials, blocks, conditionals, iterations, and inline JavaScript evaluation.
+ */
 export class Mustache {
     // Template engine options
     private tmplRoot = "";
@@ -60,11 +64,7 @@ export class Mustache {
         Object.assign(this.globalVars, globalVars);
     }
 
-    /**
-     * Compile template string into rendering function.
-     * @param {string} tmpl string
-     * @returns {Function} renderer function
-     */
+    /** Compile a template string into a renderer function. */
     compile(tmpl: string): Renderer {
         const codes: string[] = [];
         tmpl = this.block(tmpl);
@@ -108,12 +108,12 @@ export class Mustache {
         }
     }
 
-    /** Render template string with data. */
+    /** Compile and render a template string with data in one call. */
     render(tmpl: string, data: unknown): Promise<string> {
         return this.compile(tmpl)(data);
     }
 
-    /** Render template file with data. */
+    /** Load a template file (relative to `tmplRoot`), cache the compiled result, and render with data. */
     async view(file: string, data: unknown): Promise<string> {
         let render = this.cache[file];
         if (!render) {
