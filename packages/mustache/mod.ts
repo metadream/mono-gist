@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 
+/** Template syntax */
 const Syntax = {
     PARTIAL: /\{\{@\s*(\S+?)\s*\}\}/g,
     BLOCK_HOLDER: /\{\{>\s*(\S+?)\s*\}\}/g,
@@ -10,6 +11,7 @@ const Syntax = {
     ITERATIVE: /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
 };
 
+/** Variable pattern */
 const Variable = {
     REMOVE: /\/\*[\w\W]*?\*\/|\/\/[^\n]*\n|\/\/[^\n]*$|"(?:[^"\\]|\\[\w\W])*"|'(?:[^'\\]|\\[\w\W])*'|\s*\.\s*[$\w\.]+/g,
     SPLIT: /[^\w$]+/g,
@@ -20,22 +22,49 @@ const Variable = {
     SPLIT2: /^$|,+/,
 };
 
+/** Renderer function type */
 type Renderer = (data: unknown) => Promise<string>;
 
-function readTextFile(path: string) {
-    return Bun.file(path).text();
+/** Read text file with the appropriate method for the runtime */
+async function readTextFile(path: string) {
+    if (typeof Bun !== "undefined") {
+        return await Bun.file(path).text();
+    }
+    if (typeof Deno !== "undefined") {
+        return await Deno.readTextFile(path);
+    }
+    if (typeof process !== "undefined" && process.versions?.node) {
+        return import("fs").then((fs) => fs.promises.readFile(path, "utf8"));
+    }
+    throw new Error("Unsupported runtime");
 }
 
+/**
+ * Mustache - A Tiny Independent Template Engine
+ * Quickly parse template strings and files with specific syntax.
+ *
+ * @Author Marco
+ * @Since 2022-11-09
+ */
 export class Mustache {
+    // Template engine options
     private tmplRoot = "";
     private globalVars: Record<string, unknown> = {};
+
+    // Template file and compiled function cache.
     private cache: Record<string, Renderer> = {};
 
+    /** Set template root path and global variables. */
     constructor(tmplRoot: string, globalVars: Record<string, unknown> = {}) {
         this.tmplRoot = tmplRoot;
         Object.assign(this.globalVars, globalVars);
     }
 
+    /**
+     * Compile template string into rendering function.
+     * @param {string} tmpl string
+     * @returns {Function} renderer function
+     */
     compile(tmpl: string): Renderer {
         const codes: string[] = [];
         tmpl = this.block(tmpl);
@@ -79,10 +108,12 @@ export class Mustache {
         }
     }
 
+    /** Render template string with data. */
     render(tmpl: string, data: unknown): Promise<string> {
         return this.compile(tmpl)(data);
     }
 
+    /** Render template file with data. */
     async view(file: string, data: unknown): Promise<string> {
         let render = this.cache[file];
         if (!render) {
@@ -91,6 +122,7 @@ export class Mustache {
         return render(data);
     }
 
+    /** Load other files referenced in the template file. */
     private async include(file: string): Promise<string> {
         let tmpl = await readTextFile(resolve(this.tmplRoot, file));
 
@@ -102,6 +134,7 @@ export class Mustache {
         return tmpl;
     }
 
+    /** Replace defined blocks in template string. */
     private block(tmpl: string): string {
         const blocks: Record<string, string> = {};
         return tmpl
@@ -112,6 +145,7 @@ export class Mustache {
             .replace(Syntax.BLOCK_HOLDER, (_, name: string) => blocks[name] || "");
     }
 
+    /** Declare all variables in the code uniformly at the beginning of the function body. */
     private declare(codes: string[]): string {
         const varNames = codes
             .join(",")
@@ -137,29 +171,34 @@ export class Mustache {
         return "";
     }
 
+    /** Reduce template string */
     private reduce(tmpl: string): string {
         return tmpl
             .trim()
-            .replace(/<!--[\s\S]*?-->/g, "")
-            .replace(/\/\*[\s\S]*?\*\//g, "")
-            .replace(/\n\s*\/\/.*/g, "")
-            .replace(/(\r|\n)[\t ]+/g, "")
-            .replace(/[\t ]+(\r|\n)/g, "")
-            .replace(/\r|\n|\t/g, "");
+            .replace(/<!--[\s\S]*?-->/g, "") // remove html comments
+            .replace(/\/\*[\s\S]*?\*\//g, "") // remove js comments in multiline
+            .replace(/\n\s*\/\/.*/g, "") // remove js comments inline
+            .replace(/(\r|\n)[\t ]+/g, "") // remove leading spaces
+            .replace(/[\t ]+(\r|\n)/g, "") // remove trailing spaces
+            .replace(/\r|\n|\t/g, ""); // remove breaks and tabs
     }
 
+    /** Escape backslashes and single quotes. */
     private escape(tmpl: string): string {
         return tmpl.replace(/\\/g, "\\\\").replace(/\'/g, "\\'");
     }
 
+    /** Unescape single quotes. */
     private unescape(tmpl: string): string {
         return tmpl.replace(/\\'/g, "'");
     }
 
+    /** Shortcut for outputting the function body. */
     private output(code: string): string {
         return "';" + code + "out+='";
     }
 
+    /** Rewrite the replacement function in asynchronous mode. */
     private async replaceAsync(str: string, regex: RegExp, asyncFn: any) {
         const promises: any = [];
         const replacer: any = (match: any, ...args: any) => {
