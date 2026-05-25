@@ -1,4 +1,4 @@
-import { normalize } from "path";
+import { normalize } from "node:path";
 
 export function nanoid(size = 24, alphabet?: string): string {
     const chars = alphabet ?? "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -12,10 +12,7 @@ export function nanoid(size = 24, alphabet?: string): string {
 }
 
 export function normalizePath(path: string): string {
-    return normalize(path)
-        .replace(/\\/g, "/")
-        .replace(/\/+/g, "/")
-        .replace(/^\//, "");
+    return normalize(path).replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\//, "");
 }
 
 export function isValidPath(path: string): boolean {
