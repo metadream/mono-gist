@@ -27,3 +27,13 @@ mono-gist/
 │   └── utils/         # @gist/utils
 └── README.md
 ```
+
+```
+git add -A
+git commit -m "fix: publish per package to avoid root validation"
+git push
+git tag -d 0.2.0
+git push origin :refs/tags/0.2.0
+git tag 0.2.0
+git push origin 0.2.0
+```
