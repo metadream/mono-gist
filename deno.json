@@ -1,3 +1,5 @@
 {
-    "workspace": ["packages/*"]
+    "workspace": ["packages/*"],
+    "name": "@gist/monorepo",
+    "version": "0.0.0"
 }
