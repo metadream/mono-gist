@@ -7,20 +7,24 @@
  * @returns
  */
 function compact(totalPages: number, pageNumber: number, around = 2): number[] {
-    const baseCount = around * 2 + 5;
-    const surplus = baseCount - 2;
-    const startIndex = 1 + 2 + around + 1;
-    const endIndex = totalPages - 2 - around - 1;
+    const baseCount = around * 2 + 5; // 总元素个数：环绕左右页码*2+当前页+省略号*2+首页+末页
+    const surplus = baseCount - 2; // 只出现一个省略号时剩余元素个数
+    const startIndex = 1 + 2 + around + 1; // 前面出现省略号的临界点
+    const endIndex = totalPages - 2 - around - 1; // 后面出现省略号的临界点
 
+    // 全部显示，不出现省略号
     if (totalPages <= baseCount) {
         return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
+    // 只有后面出现省略号
     if (pageNumber < startIndex) {
         return [...Array.from({ length: surplus }, (_, i) => i + 1), 0, totalPages];
     }
+    // 只有前边出现省略号
     if (pageNumber > endIndex) {
         return [1, 0, ...Array.from({ length: surplus }, (_, i) => totalPages - surplus + i + 1)];
     }
+    // 两边都有省略号
     return [1, 0, ...Array.from({ length: around * 2 + 1 }, (_, i) => pageNumber - around + i), 0, totalPages];
 }
 
