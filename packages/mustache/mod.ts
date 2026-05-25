@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 
 const Syntax = {
     PARTIAL: /\{\{@\s*(\S+?)\s*\}\}/g,
