@@ -1,97 +1,29 @@
-# Deno-Gist
+# mono-gist
 
-## GoogleDrive
+Monorepo of lightweight single-file libraries, organized as [JSR workspace](https://jsr.io) packages. Each package is independently publishable to `jsr.io/@gist/*`.
 
-An easy way to access Google Drive without any external dependencies.
+## Packages
 
-```ts
-import { GoogleDrive } from "https://deno.land/x.google/google-drive.ts";
+| Package | Description |
+|---------|-------------|
+| [`@gist/cache`](./packages/cache) | Expiring in-memory cache with automatic cleanup |
+| [`@gist/crypto`](./packages/crypto) | Cryptographic utilities: SHA-1, AES-CBC, RSA-OAEP, JWT encryption |
+| [`@gist/github`](./packages/github) | GitHub OAuth helper for web frameworks |
+| [`@gist/mustache`](./packages/mustache) | Tiny Mustache-like template engine (works in Bun, Deno, Node) |
+| [`@gist/pageable`](./packages/pageable) | Pagination helper with compact page number display |
+| [`@gist/utils`](./packages/utils) | General-purpose utilities: string/date formatting, localeCompare, merge |
 
-const gd = new GoogleDrive({
-  client_id: "xxxxx-xxxxxxxxxxxxxx.apps.googleusercontent.com",
-  client_secret: "xxxxxxxxxxxxxxx",
-  refresh_token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  logger: false,
-});
+## Structure
 
-try {
-  // This step can be omitted, and it will reauthorize when requesting data
-  await gd.authorize();
-  // The default value of the path is "root"
-  const metadata = await gd.index("your/path");
-
-  if (metadata.isFolder) {
-    console.log(metadata.list());
-  } else {
-    // handle metadata.raw() or metadata.raw(range)
-  }
-} catch (e) {
-  console.log(e);
-}
 ```
-
-## GoogleOAuth
-
-This class is a simplification of the google oauth2 authorization flow.
-
-### 1. Create an instance
-
-```ts
-import { GoogleOAuth } from "https://deno.land/x/google/google-oauth.ts";
-
-const ga = new GoogleOAuth({
-  client_id: "xxxxx-xxxxxxxxxxxxxx.apps.googleusercontent.com",
-  client_secret: "xxxxxxxxxxxxxxx",
-  redirect_uri: "http://example.com/redirect_uri",
-  "scopes": [
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/drive.readonly",
-  ],
-});
-
-const link = ga.buildAuthLink();
-```
-
-### 2. Visit the link
-
-After clicking the link to complete the authorization, it will redirect to the
-uri with the "code" parameter. You can receive the "code" in redirect_uri.
-
-### 3. Get tokens
-
-```ts
-// tokens include refresh_token, access_token, id_token, etc.
-// But the access_token has an expiry time, so you need to get it again through the next step
-const tokens = await ga.getTokens(code);
-```
-
-### 4. Get access_token
-
-```ts
-// refresh_token is obtained in the previous step, it is permanently valid.
-const accessToken = ga.getAccessToken(refresh_token);
-```
-
-### 5. Decode id_token (without verifiy signature)
-
-The id_token obtained in the third step contains some personal information of
-the google account, you can decode it.
-
-```ts
-const data = ga.decodeIdToken(id_token);
-// it will return { header, payload, signature }
-// payload is the personal information
-```
-
-### 6. Decode id_token (verify signature via CERTS_URL)
-
-It is usually not necessary to verify the signature for the first authorization,
-but it is strongly recommended to verify when you use the id_token as a cookie
-to keep the login state.
-
-**NOTE: There is a bug in this method, which is caused by the type of
-"cryptoKey", and I don't know how to solve it for the time being.**
-
-```ts
-const data = await ga.verifyIdToken(id_token);
+mono-gist/
+├── deno.json          # JSR workspace config
+├── packages/
+│   ├── cache/         # @gist/cache
+│   ├── crypto/        # @gist/crypto
+│   ├── github/        # @gist/github
+│   ├── mustache/      # @gist/mustache
+│   ├── pageable/      # @gist/pageable
+│   └── utils/         # @gist/utils
+└── README.md
 ```

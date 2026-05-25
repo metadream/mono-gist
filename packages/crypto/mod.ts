@@ -1,4 +1,16 @@
-import { decodeBase64, encodeBase64 } from "@std/encoding";
+function encodeBase64(data: Uint8Array | ArrayBuffer): string {
+    const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+}
+
+function decodeBase64(str: string): Uint8Array {
+    const binary = atob(str);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
 
 const textEncode = (s: string) => new TextEncoder().encode(s);
 const textDecode = (u: Uint8Array) => new TextDecoder().decode(u);
@@ -9,10 +21,6 @@ const importAesKey = async (key: string) => {
     return await crypto.subtle.importKey("raw", rawKey, "AES-CBC", true, ["encrypt", "decrypt"]);
 };
 
-/**
- * SHA-1 hash encryption
- * algorithm: SHA-1
- */
 export async function sha1(message: string): Promise<string> {
     const buffer = await crypto.subtle.digest("SHA-1", textEncode(message));
     const array = Array.from(new Uint8Array(buffer));
@@ -20,11 +28,6 @@ export async function sha1(message: string): Promise<string> {
     return hex;
 }
 
-/**
- * AES encryption and decryption
- * algorithm: AES-CBC
- * encoding: base64
- */
 export const AES: any = {
     async encrypt(plaintext: string, key: string) {
         const iv = crypto.getRandomValues(new Uint8Array(16));
@@ -52,11 +55,6 @@ export const AES: any = {
     },
 };
 
-/**
- * RSA encryption and decryption
- * algorithm: RSA-OAEP
- * encoding: base64
- */
 export const RSA: any = {
     async generateKeyPair() {
         return await crypto.subtle.generateKey(
@@ -120,10 +118,6 @@ export const RSA: any = {
     },
 };
 
-/**
- * JWT encryption and decryption
- * algorithm: RSA-OAEP
- */
 export const JWT: any = {
     async create(payload: Record<string, unknown>, publicKey: CryptoKey) {
         return await RSA.encrypt(JSON.stringify(payload), publicKey);

@@ -1,20 +1,3 @@
-/**
- * Expiring Cache
- *
- * @Author Marco
- * @Since 2023-09-07
- * @example
- * ```
- * const cache = new ExpiringCache<string, object>(60);
- * cache.set("key", {}, 10);
- * cache.ttl("key", 10);
- * const value = cache.get("key");
- *
- * cache.delete("key");
- * cache.clear();
- * cache.dispose();
- * ```
- */
 export class ExpiringCache<K, V> {
     private cache: Map<K, { value: V; expires: number }>;
     private readonly cleanupInterval: number;
