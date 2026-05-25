@@ -17,7 +17,6 @@ Monorepo of lightweight single-file libraries, organized as [JSR workspace](http
 
 ```
 mono-gist/
-├── deno.json          # JSR workspace config
 ├── packages/
 │   ├── cache/         # @gist/cache
 │   ├── crypto/        # @gist/crypto
