@@ -37,6 +37,7 @@ const gh = createGitHubAuth({
 - `authUrl` (`string`, default `"https://github.com/login/oauth/authorize"`)
 - `tokenUrl` (`string`, default `"https://github.com/login/oauth/access_token"`)
 - `apiUrl` (`string`, default `"https://api.github.com/user"`)
+- `tlsRejectUnauthorized` (`boolean`, default `true`) — Disable TLS verification (set to `false` for self-signed certs in dev)
 
 **Returns:**
 - `loginUrl` — The GitHub OAuth authorization URL to redirect users to
