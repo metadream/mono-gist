@@ -28,6 +28,8 @@ mono-gist/
 └── README.md
 ```
 
+## Publish
+
 ```
 git add -A
 git commit -m "fix: publish per package to avoid root validation"
