@@ -1,3 +1,4 @@
+/** GitHub user object returned by the API. */
 export interface GitHubUser {
     id: number;
     login: string;
@@ -10,6 +11,7 @@ export interface GitHubUser {
     [key: string]: unknown;
 }
 
+/** Configuration for creating a GitHub OAuth helper. */
 export interface GitHubAuthConfig {
     clientId: string;
     clientSecret: string;
@@ -22,9 +24,11 @@ export interface GitHubAuthConfig {
     tlsRejectUnauthorized?: boolean;
 }
 
-export function createGitHubAuth(
-    config: GitHubAuthConfig,
-): { loginUrl: string; authHandler: (onAuth: (c: any, user: GitHubUser) => any) => (c: any) => Promise<any> } {
+/** Create a GitHub OAuth helper with a login URL and auth handler. */
+export function createGitHubAuth(config: GitHubAuthConfig): {
+    loginUrl: string;
+    authHandler: (onAuth: (c: any, user: GitHubUser) => any) => (c: any) => Promise<any>;
+} {
     const scope = config.scope ?? "read:user";
     const authUrl = config.authUrl ?? "https://github.com/login/oauth/authorize";
     const tokenUrl = config.tokenUrl ?? "https://github.com/login/oauth/access_token";
