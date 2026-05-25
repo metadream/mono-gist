@@ -1,5 +1,3 @@
-import { normalize } from "node:path";
-
 export function nanoid(size = 24, alphabet?: string): string {
     const chars = alphabet ?? "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const bytes = crypto.getRandomValues(new Uint8Array(size));
@@ -12,7 +10,21 @@ export function nanoid(size = 24, alphabet?: string): string {
 }
 
 export function normalizePath(path: string): string {
-    return normalize(path).replace(/\\/g, "/").replace(/\/+/g, "/").replace(/^\//, "");
+    const parts = path.replace(/\\/g, "/").split("/");
+    const result: string[] = [];
+    for (const part of parts) {
+        if (part === "." || part === "") continue;
+        if (part === "..") {
+            if (result.length > 0 && result[result.length - 1] !== "..") {
+                result.pop();
+            } else {
+                result.push("..");
+            }
+        } else {
+            result.push(part);
+        }
+    }
+    return result.join("/");
 }
 
 export function isValidPath(path: string): boolean {

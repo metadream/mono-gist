@@ -2,6 +2,8 @@
 
 Pagination helper with compact page number display (e.g. `[1, ..., 8, 9, 10, 11, 12, ..., 20]`). Zero dependencies.
 
+**Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ✅ Cloudflare Workers · ✅ Browsers
+
 ## Install
 
 ```bash

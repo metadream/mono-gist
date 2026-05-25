@@ -1,6 +1,8 @@
 # @gist/utils
 
-General-purpose utility functions: string formatting, date formatting, path normalization, array/object operations, and more. Zero dependencies (uses `path` from std lib).
+General-purpose utility functions: string formatting, date formatting, path normalization, array/object operations, and more. Zero dependencies.
+
+**Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ✅ Cloudflare Workers · ✅ Browsers
 
 ## Install
 

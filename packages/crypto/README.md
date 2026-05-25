@@ -2,6 +2,8 @@
 
 Cryptographic utilities built on Web Crypto API: SHA-1, AES-CBC, RSA-OAEP, and JWT-style encryption. Zero external dependencies.
 
+**Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ✅ Cloudflare Workers · ✅ Browsers
+
 ## Install
 
 ```bash

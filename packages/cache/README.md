@@ -2,6 +2,8 @@
 
 Generic expiring in-memory cache with automatic cleanup. Zero dependencies.
 
+**Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ✅ Cloudflare Workers · ✅ Browsers
+
 ## Install
 
 ```bash

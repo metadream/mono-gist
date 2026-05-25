@@ -1,6 +1,8 @@
 # @gist/mustache
 
-Tiny independent template engine with Mustache-like syntax. Supports partials, blocks, conditionals, and iterations. Works in Bun, Deno, and Node.js.
+Tiny independent template engine with Mustache-like syntax. Supports partials, blocks, conditionals, and iterations.
+
+**Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ❌ Cloudflare Workers · ❌ Browsers
 
 ## Install
 

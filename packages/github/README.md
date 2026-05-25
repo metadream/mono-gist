@@ -2,6 +2,8 @@
 
 GitHub OAuth helper for web frameworks. Zero external dependencies.
 
+**Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ✅ Cloudflare Workers · ✅ Browsers
+
 ## Install
 
 ```bash
