@@ -21,6 +21,7 @@ const importAesKey = async (key: string) => {
     return await crypto.subtle.importKey("raw", rawKey, "AES-CBC", true, ["encrypt", "decrypt"]);
 };
 
+/** Compute the SHA-1 digest of a string as a lowercase hex string. */
 export async function sha1(message: string): Promise<string> {
     const buffer = await crypto.subtle.digest("SHA-1", textEncode(message));
     const array = Array.from(new Uint8Array(buffer));
@@ -28,7 +29,9 @@ export async function sha1(message: string): Promise<string> {
     return hex;
 }
 
+/** AES-CBC encryption/decryption utilities. */
 export const AES: any = {
+    /** Encrypt plaintext with a passphrase using AES-CBC. Returns `base64(iv).base64(ciphertext)`. */
     async encrypt(plaintext: string, key: string) {
         const iv = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
         const encrypted = await crypto.subtle.encrypt(
@@ -39,6 +42,7 @@ export const AES: any = {
         return encodeBase64(iv) + "." + encodeBase64(encrypted);
     },
 
+    /** Decrypt ciphertext produced by `AES.encrypt`. Returns the plaintext or `undefined` on failure. */
     async decrypt(ciphertext: string, key: string) {
         const index = ciphertext.indexOf(".");
         const iv = decodeBase64(ciphertext.substring(0, index));
@@ -55,7 +59,9 @@ export const AES: any = {
     },
 };
 
+/** RSA-OAEP encryption/decryption utilities. */
 export const RSA: any = {
+    /** Generate an RSA-OAEP 2048-bit key pair. */
     async generateKeyPair() {
         return await crypto.subtle.generateKey(
             {
@@ -69,18 +75,21 @@ export const RSA: any = {
         );
     },
 
+    /** Export a public key as a PEM string. */
     async exportPublicKey(key: CryptoKey) {
         const buffer = await crypto.subtle.exportKey("spki", key);
         const base64 = encodeBase64(new Uint8Array(buffer));
         return `-----BEGIN PUBLIC KEY-----\n${base64}\n-----END PUBLIC KEY-----`;
     },
 
+    /** Export a private key as a PEM string. */
     async exportPrivateKey(key: CryptoKey) {
         const buffer = await crypto.subtle.exportKey("pkcs8", key);
         const base64 = encodeBase64(new Uint8Array(buffer));
         return `-----BEGIN PRIVATE KEY-----\n${base64}\n-----END PRIVATE KEY-----`;
     },
 
+    /** Import a PEM-encoded public key. */
     async importPublicKey(pem: string) {
         const pemHeader = "-----BEGIN PUBLIC KEY-----\n";
         const pemFooter = "\n-----END PUBLIC KEY-----";
@@ -94,6 +103,7 @@ export const RSA: any = {
         );
     },
 
+    /** Import a PEM-encoded private key. */
     async importPrivateKey(pem: string) {
         const pemHeader = "-----BEGIN PRIVATE KEY-----\n";
         const pemFooter = "\n-----END PRIVATE KEY-----";
@@ -107,10 +117,12 @@ export const RSA: any = {
         );
     },
 
+    /** Encrypt plaintext with a public key. Returns base64-encoded ciphertext. */
     async encrypt(plaintext: string, publicKey: CryptoKey) {
         return encodeBase64(await crypto.subtle.encrypt({ name: "RSA-OAEP" }, publicKey, textEncode(plaintext)));
     },
 
+    /** Decrypt base64-encoded ciphertext with a private key. */
     async decrypt(ciphertext: string, privateKey: CryptoKey) {
         return textDecode(
             new Uint8Array(await crypto.subtle.decrypt({ name: "RSA-OAEP" }, privateKey, decodeBase64(ciphertext))),
@@ -118,11 +130,14 @@ export const RSA: any = {
     },
 };
 
+/** JWT-style encryption utilities (encrypts JSON payload with RSA public key). */
 export const JWT: any = {
+    /** Encrypt a JSON payload with an RSA public key. */
     async create(payload: Record<string, unknown>, publicKey: CryptoKey) {
         return await RSA.encrypt(JSON.stringify(payload), publicKey);
     },
 
+    /** Decrypt and verify a JWT token. Checks `exp` timestamp and returns the payload, or `undefined` if expired. */
     async verify(jwt: string, privateKey: CryptoKey) {
         const payload: Record<string, unknown> = JSON.parse(await RSA.decrypt(jwt, privateKey));
         if (payload.exp && Date.now() > (payload.exp as number)) return;
