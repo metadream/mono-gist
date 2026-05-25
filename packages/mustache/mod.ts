@@ -22,20 +22,11 @@ const Variable = {
 
 type Renderer = (data: unknown) => Promise<string>;
 
-async function readTextFile(path: string) {
-    if (typeof Bun !== "undefined") {
-        return await Bun.file(path).text();
-    }
-    if (typeof Deno !== "undefined") {
-        return await Deno.readTextFile(path);
-    }
-    if (typeof process !== "undefined" && process.versions?.node) {
-        return import("fs").then((fs) => fs.promises.readFile(path, "utf8"));
-    }
-    throw new Error("Unsupported runtime");
+function readTextFile(path: string) {
+    return Bun.file(path).text();
 }
 
-export class Stache {
+export class Mustache {
     private tmplRoot = "";
     private globalVars: Record<string, unknown> = {};
     private cache: Record<string, Renderer> = {};

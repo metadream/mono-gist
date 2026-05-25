@@ -1,6 +1,6 @@
-import { Stache } from "./mod.ts";
+import { Mustache } from "./mod.ts";
 
-const engine = new Stache("/tmp");
+const engine = new Mustache("/tmp");
 
 // Interpolation
 const html = await engine.render("<h1>Hello {{=name}}!</h1>", { name: "World" });
