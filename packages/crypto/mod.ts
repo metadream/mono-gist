@@ -144,3 +144,44 @@ export const JWT: any = {
         return payload;
     },
 };
+
+/** PBKDF2-based password hashing and verification (PHC string format). */
+export const Password = {
+    /** Hash a password with PBKDF2-SHA256. Returns a PHC string: `$pbkdf2$&lt;iterations&gt;$&lt;base64-salt&gt;$&lt;base64-hash&gt;` */
+    async hash(password: string, options?: { iterations?: number; saltLength?: number; keyLength?: number }): Promise<string> {
+        const iterations = options?.iterations ?? 100000;
+        const saltLength = options?.saltLength ?? 16;
+        const keyLength = options?.keyLength ?? 32;
+        const salt = crypto.getRandomValues(new Uint8Array(saltLength)) as Uint8Array<ArrayBuffer>;
+        const key = await crypto.subtle.importKey("raw", textEncode(password), { name: "PBKDF2" }, false, ["deriveBits"]);
+        const derived = await crypto.subtle.deriveBits(
+            { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+            key,
+            keyLength * 8,
+        );
+        return `$pbkdf2$${iterations}$${encodeBase64(salt)}$${encodeBase64(new Uint8Array(derived))}`;
+    },
+
+    /** Verify a password against a PHC string produced by `Password.hash`. */
+    async verify(password: string, hash: string): Promise<boolean> {
+        const parts = hash.split("$");
+        if (parts.length < 5 || parts[1] !== "pbkdf2") return false;
+        const iterations = parseInt(parts[2], 10);
+        const salt = decodeBase64(parts[3]);
+        const expectedHash = parts[4];
+        const hashLen = Math.floor(expectedHash.replace(/=+$/, "").length * 3 / 4);
+        const key = await crypto.subtle.importKey("raw", textEncode(password), { name: "PBKDF2" }, false, ["deriveBits"]);
+        const derived = await crypto.subtle.deriveBits(
+            { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
+            key,
+            hashLen * 8,
+        );
+        const actualHash = encodeBase64(new Uint8Array(derived));
+        if (actualHash.length !== expectedHash.length) return false;
+        let result = 0;
+        for (let i = 0; i < actualHash.length; i++) {
+            result |= actualHash.charCodeAt(i) ^ expectedHash.charCodeAt(i);
+        }
+        return result === 0;
+    },
+};

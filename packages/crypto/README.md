@@ -1,6 +1,6 @@
 # @gist/crypto
 
-Cryptographic utilities built on Web Crypto API: SHA-1, AES-CBC, RSA-OAEP, and JWT-style encryption. Zero external dependencies.
+Cryptographic utilities built on Web Crypto API: SHA-256, AES-CBC, RSA-OAEP, JWT-style encryption, and PBKDF2 password hashing. Zero external dependencies.
 
 **Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ✅ Cloudflare Workers · ✅ Browsers
 
@@ -13,10 +13,14 @@ bunx jsr add @gist/crypto
 ## Usage
 
 ```ts
-import { sha256, AES, RSA, JWT } from "@gist/crypto";
+import { sha256, Password, AES, RSA, JWT } from "@gist/crypto";
 
 // SHA-256
 const hash = await sha256("hello");
+
+// Password hashing
+const pwHash = await Password.hash("s3cret");
+const ok = await Password.verify("s3cret", pwHash); // true
 
 // AES encrypt/decrypt
 const encrypted = await AES.encrypt("secret data", "password");
@@ -68,3 +72,11 @@ Encrypts a JSON payload with an RSA public key.
 
 ### `JWT.verify(jwt: string, privateKey: CryptoKey): Promise<Record<string, unknown> | undefined>`
 Decrypts a token and verifies the `exp` timestamp. Returns the payload or `undefined`.
+
+### `Password.hash(password: string, options?): Promise<string>`
+Hashes a password with PBKDF2-SHA256 (100k iterations, 16-byte salt, 32-byte key by default). Returns a PHC string: `$pbkdf2$iterations$salt$hash`.
+
+Options: `{ iterations?: number, saltLength?: number, keyLength?: number }`
+
+### `Password.verify(password: string, hash: string): Promise<boolean>`
+Verifies a password against a PHC string produced by `Password.hash`.
