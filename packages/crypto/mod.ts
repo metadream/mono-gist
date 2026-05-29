@@ -1,3 +1,28 @@
+interface AES {
+    encrypt(plaintext: string, key: string): Promise<string>;
+    decrypt(ciphertext: string, key: string): Promise<string | undefined>;
+}
+
+interface RSA {
+    generateKeyPair(): Promise<CryptoKeyPair>;
+    exportPublicKey(key: CryptoKey): Promise<string>;
+    exportPrivateKey(key: CryptoKey): Promise<string>;
+    importPublicKey(pem: string): Promise<CryptoKey>;
+    importPrivateKey(pem: string): Promise<CryptoKey>;
+    encrypt(plaintext: string, publicKey: CryptoKey): Promise<string>;
+    decrypt(ciphertext: string, privateKey: CryptoKey): Promise<string>;
+}
+
+interface JWT {
+    create(payload: Record<string, unknown>, publicKey: CryptoKey): Promise<string>;
+    verify(jwt: string, privateKey: CryptoKey): Promise<Record<string, unknown> | undefined>;
+}
+
+interface Password {
+    hash(password: string, options?: { iterations?: number; saltLength?: number; keyLength?: number }): Promise<string>;
+    verify(password: string, hash: string): Promise<boolean>;
+}
+
 function encodeBase64(data: Uint8Array | ArrayBuffer): string {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
     let binary = "";
@@ -30,7 +55,7 @@ export async function sha256(message: string): Promise<string> {
 }
 
 /** AES-CBC encryption/decryption utilities. */
-export const AES: any = {
+export const AES: AES = {
     /** Encrypt plaintext with a passphrase using AES-CBC. Returns `base64(iv).base64(ciphertext)`. */
     async encrypt(plaintext: string, key: string) {
         const iv = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
@@ -60,7 +85,7 @@ export const AES: any = {
 };
 
 /** RSA-OAEP encryption/decryption utilities. */
-export const RSA: any = {
+export const RSA: RSA = {
     /** Generate an RSA-OAEP 2048-bit key pair. */
     async generateKeyPair() {
         return await crypto.subtle.generateKey(
@@ -131,7 +156,7 @@ export const RSA: any = {
 };
 
 /** JWT-style encryption utilities (encrypts JSON payload with RSA public key). */
-export const JWT: any = {
+export const JWT: JWT = {
     /** Encrypt a JSON payload with an RSA public key. */
     async create(payload: Record<string, unknown>, publicKey: CryptoKey) {
         return await RSA.encrypt(JSON.stringify(payload), publicKey);
@@ -146,14 +171,19 @@ export const JWT: any = {
 };
 
 /** PBKDF2-based password hashing and verification (PHC string format). */
-export const Password = {
+export const Password: Password = {
     /** Hash a password with PBKDF2-SHA256. Returns a PHC string: `$pbkdf2$&lt;iterations&gt;$&lt;base64-salt&gt;$&lt;base64-hash&gt;` */
-    async hash(password: string, options?: { iterations?: number; saltLength?: number; keyLength?: number }): Promise<string> {
+    async hash(
+        password: string,
+        options?: { iterations?: number; saltLength?: number; keyLength?: number },
+    ): Promise<string> {
         const iterations = options?.iterations ?? 100000;
         const saltLength = options?.saltLength ?? 16;
         const keyLength = options?.keyLength ?? 32;
         const salt = crypto.getRandomValues(new Uint8Array(saltLength)) as Uint8Array<ArrayBuffer>;
-        const key = await crypto.subtle.importKey("raw", textEncode(password), { name: "PBKDF2" }, false, ["deriveBits"]);
+        const key = await crypto.subtle.importKey("raw", textEncode(password), { name: "PBKDF2" }, false, [
+            "deriveBits",
+        ]);
         const derived = await crypto.subtle.deriveBits(
             { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
             key,
@@ -169,8 +199,10 @@ export const Password = {
         const iterations = parseInt(parts[2], 10);
         const salt = decodeBase64(parts[3]);
         const expectedHash = parts[4];
-        const hashLen = Math.floor(expectedHash.replace(/=+$/, "").length * 3 / 4);
-        const key = await crypto.subtle.importKey("raw", textEncode(password), { name: "PBKDF2" }, false, ["deriveBits"]);
+        const hashLen = Math.floor((expectedHash.replace(/=+$/, "").length * 3) / 4);
+        const key = await crypto.subtle.importKey("raw", textEncode(password), { name: "PBKDF2" }, false, [
+            "deriveBits",
+        ]);
         const derived = await crypto.subtle.deriveBits(
             { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
             key,

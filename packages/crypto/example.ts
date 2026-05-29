@@ -4,7 +4,7 @@ import { sha256, Password, AES, RSA, JWT } from "./mod.ts";
 console.log("sha256:", await sha256("hello"));
 
 // Password hashing
-const pwHash = await Password.hash("xehu");
+const pwHash = await Password.hash("s3cret");
 console.log("password hash:", pwHash);
 console.log("password verify:", await Password.verify("s3cret", pwHash));
 
