@@ -14,8 +14,8 @@ interface RSA {
 }
 
 interface JWT {
-    create(payload: Record<string, unknown>, publicKey: CryptoKey): Promise<string>;
-    verify(jwt: string, privateKey: CryptoKey): Promise<Record<string, unknown> | undefined>;
+    sign(payload: Record<string, unknown>, secret: string, options?: { expiresIn?: number }): Promise<string>;
+    verify(jwt: string, secret: string): Promise<Record<string, unknown> | undefined>;
 }
 
 interface Password {
@@ -45,12 +45,22 @@ function decodeBase64(str: string): Uint8Array<ArrayBuffer> {
     return bytes;
 }
 
-async function importAesKey(key: string) {
+function base64urlEncode(data: Uint8Array | ArrayBuffer): string {
+    return encodeBase64(data).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64urlDecode(str: string): Uint8Array<ArrayBuffer> {
+    str = str.replace(/-/g, "+").replace(/_/g, "/");
+    while (str.length % 4) str += "=";
+    return decodeBase64(str);
+}
+
+async function importAesKey(key: string, salt: Uint8Array<ArrayBuffer>) {
     const baseKey = await crypto.subtle.importKey("raw", textEncode(key), "PBKDF2", false, ["deriveKey"]);
     return await crypto.subtle.deriveKey(
-        { name: "PBKDF2", salt: textEncode("@gist/crypto"), iterations: 10000, hash: "SHA-256" },
+        { name: "PBKDF2", salt, iterations: 10000, hash: "SHA-256" },
         baseKey,
-        { name: "AES-CBC", length: 128 },
+        { name: "AES-GCM", length: 256 },
         true,
         ["encrypt", "decrypt"],
     );
@@ -64,28 +74,29 @@ export async function sha256(message: string): Promise<string> {
     return hex;
 }
 
-/** AES-CBC encryption/decryption utilities. */
+/** AES-256-GCM encryption/decryption utilities. */
 export const AES: AES = {
-    /** Encrypt plaintext with a passphrase using AES-CBC. Returns `base64(iv).base64(ciphertext)`. */
+    /** Encrypt plaintext with a passphrase using AES-256-GCM. Returns `base64(salt).base64(iv).base64(ciphertext)`. */
     async encrypt(plaintext: string, key: string) {
-        const iv = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
+        const salt = crypto.getRandomValues(new Uint8Array(16)) as Uint8Array<ArrayBuffer>;
+        const iv = crypto.getRandomValues(new Uint8Array(12)) as Uint8Array<ArrayBuffer>;
         const encrypted = await crypto.subtle.encrypt(
-            { name: "AES-CBC", iv },
-            await importAesKey(key),
+            { name: "AES-GCM", iv },
+            await importAesKey(key, salt),
             textEncode(plaintext),
         );
-        return encodeBase64(iv) + "." + encodeBase64(encrypted);
+        return encodeBase64(salt) + "." + encodeBase64(iv) + "." + encodeBase64(encrypted);
     },
 
     /** Decrypt ciphertext produced by `AES.encrypt`. Returns the plaintext or `undefined` on failure. */
     async decrypt(ciphertext: string, key: string) {
-        const index = ciphertext.indexOf(".");
-        const iv = decodeBase64(ciphertext.substring(0, index));
+        const parts = ciphertext.split(".");
+        if (parts.length !== 3) return;
         try {
             const decrypted = await crypto.subtle.decrypt(
-                { name: "AES-CBC", iv },
-                await importAesKey(key),
-                decodeBase64(ciphertext.substring(index + 1)),
+                { name: "AES-GCM", iv: decodeBase64(parts[1]) },
+                await importAesKey(key, decodeBase64(parts[0])),
+                decodeBase64(parts[2]),
             );
             return textDecode(new Uint8Array(decrypted));
         } catch (e) {
@@ -165,18 +176,37 @@ export const RSA: RSA = {
     },
 };
 
-/** JWT-style encryption utilities (encrypts JSON payload with RSA public key). */
+/** JWT signing and verification using HS256 (HMAC-SHA256). */
 export const JWT: JWT = {
-    /** Encrypt a JSON payload with an RSA public key. */
-    async create(payload: Record<string, unknown>, publicKey: CryptoKey) {
-        return await RSA.encrypt(JSON.stringify(payload), publicKey);
+    /** Sign a JSON payload into a JWT string using HS256. */
+    async sign(payload: Record<string, unknown>, secret: string, options?: { expiresIn?: number }) {
+        const header = { alg: "HS256", typ: "JWT" };
+        const now = Math.floor(Date.now() / 1000);
+        (payload as any).iat = now;
+        if (options?.expiresIn) (payload as any).exp = now + options.expiresIn;
+        const data = base64urlEncode(textEncode(JSON.stringify(header))) + "." +
+            base64urlEncode(textEncode(JSON.stringify(payload)));
+        const key = await crypto.subtle.importKey("raw", textEncode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+        const signature = await crypto.subtle.sign("HMAC", key, textEncode(data));
+        return data + "." + base64urlEncode(new Uint8Array(signature));
     },
 
-    /** Decrypt and verify a JWT token. Checks `exp` timestamp and returns the payload, or `undefined` if expired. */
-    async verify(jwt: string, privateKey: CryptoKey) {
-        const payload: Record<string, unknown> = JSON.parse(await RSA.decrypt(jwt, privateKey));
-        if (payload.exp && Date.now() > (payload.exp as number)) return;
-        return payload;
+    /** Verify a JWT string and return the payload, or `undefined` if invalid or expired. */
+    async verify(jwt: string, secret: string) {
+        const parts = jwt.split(".");
+        if (parts.length !== 3) return;
+        try {
+            const [headerB64, payloadB64, sigB64] = parts;
+            const data = headerB64 + "." + payloadB64;
+            const key = await crypto.subtle.importKey("raw", textEncode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+            const ok = await crypto.subtle.verify("HMAC", key, base64urlDecode(sigB64), textEncode(data));
+            if (!ok) return;
+            const payload = JSON.parse(textDecode(base64urlDecode(payloadB64))) as Record<string, unknown>;
+            if (payload.exp && Math.floor(Date.now() / 1000) > (payload.exp as number)) return;
+            return payload;
+        } catch {
+            return;
+        }
     },
 };
 

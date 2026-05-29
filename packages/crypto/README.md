@@ -1,6 +1,6 @@
 # @gist/crypto
 
-Cryptographic utilities built on Web Crypto API: SHA-256, AES-CBC, RSA-OAEP, JWT-style encryption, and PBKDF2 password hashing. Zero external dependencies.
+Cryptographic utilities built on Web Crypto API: SHA-256, AES-256-GCM, RSA-OAEP, JWT HS256, and PBKDF2 password hashing. Zero external dependencies.
 
 **Supported runtimes:** ✅ Node.js · ✅ Deno · ✅ Bun · ✅ Cloudflare Workers · ✅ Browsers
 
@@ -30,9 +30,9 @@ const decrypted = await AES.decrypt(encrypted, "password");
 const { publicKey, privateKey } = await RSA.generateKeyPair();
 const pem = await RSA.exportPublicKey(publicKey);
 
-// JWT-style encryption
-const token = await JWT.create({ sub: "user123", exp: Date.now() + 3600000 }, publicKey);
-const payload = await JWT.verify(token, privateKey);
+// JWT HS256
+const token = await JWT.sign({ sub: "user123" }, "secret", { expiresIn: 3600 });
+const payload = await JWT.verify(token, "secret");
 ```
 
 ## API
@@ -41,7 +41,7 @@ const payload = await JWT.verify(token, privateKey);
 Computes the SHA-256 digest as a lowercase hex string.
 
 ### `AES.encrypt(plaintext: string, key: string): Promise<string>`
-Encrypts `plaintext` with `key` using AES-CBC. Returns `base64(iv).base64(ciphertext)`.
+Encrypts `plaintext` with `key` using AES-256-GCM. Returns `base64(salt).base64(iv).base64(ciphertext)`.
 
 ### `AES.decrypt(ciphertext: string, key: string): Promise<string | undefined>`
 Decrypts ciphertext produced by `AES.encrypt`. Returns the plaintext or `undefined` on failure.
@@ -67,11 +67,11 @@ Encrypts plaintext with a public key. Returns base64 ciphertext.
 ### `RSA.decrypt(ciphertext: string, privateKey: CryptoKey): Promise<string>`
 Decrypts base64 ciphertext with a private key.
 
-### `JWT.create(payload: Record<string, unknown>, publicKey: CryptoKey): Promise<string>`
-Encrypts a JSON payload with an RSA public key.
+### `JWT.sign(payload: Record<string, unknown>, secret: string, options?): Promise<string>`
+Creates a signed JWT string (HS256). Automatically adds `iat` (issued at) claim. If `options.expiresIn` (seconds) is provided, also adds `exp` claim.
 
-### `JWT.verify(jwt: string, privateKey: CryptoKey): Promise<Record<string, unknown> | undefined>`
-Decrypts a token and verifies the `exp` timestamp. Returns the payload or `undefined`.
+### `JWT.verify(jwt: string, secret: string): Promise<Record<string, unknown> | undefined>`
+Verifies a JWT signature and checks `exp`. Returns the payload or `undefined`.
 
 ### `Password.hash(password: string, options?): Promise<string>`
 Hashes a password with PBKDF2-SHA256 (100k iterations, 16-byte salt, 32-byte key by default). Returns a PHC string: `$pbkdf2$iterations$salt$hash`.

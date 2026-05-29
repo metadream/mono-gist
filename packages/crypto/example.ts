@@ -21,6 +21,7 @@ console.log("rsa public key:", pubPem.slice(0, 50) + "...");
 const cipher = await RSA.encrypt("rsa secret", publicKey);
 console.log("rsa decrypted:", await RSA.decrypt(cipher, privateKey));
 
-// JWT-style
-const token = await JWT.create({ sub: "u1", exp: Date.now() + 3600000 }, publicKey);
-console.log("jwt payload:", await JWT.verify(token, privateKey));
+// JWT HS256
+const token = await JWT.sign({ sub: "u1" }, "my-secret", { expiresIn: 3600 });
+console.log("jwt token:", token);
+console.log("jwt payload:", await JWT.verify(token, "my-secret"));
