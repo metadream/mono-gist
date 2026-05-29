@@ -23,6 +23,14 @@ interface Password {
     verify(password: string, hash: string): Promise<boolean>;
 }
 
+function textEncode(s: string): Uint8Array<ArrayBuffer> {
+    return new TextEncoder().encode(s) as Uint8Array<ArrayBuffer>;
+}
+
+function textDecode(u: Uint8Array) {
+    return new TextDecoder().decode(u);
+}
+
 function encodeBase64(data: Uint8Array | ArrayBuffer): string {
     const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
     let binary = "";
@@ -37,14 +45,16 @@ function decodeBase64(str: string): Uint8Array<ArrayBuffer> {
     return bytes;
 }
 
-const textEncode = (s: string): Uint8Array<ArrayBuffer> => new TextEncoder().encode(s) as Uint8Array<ArrayBuffer>;
-const textDecode = (u: Uint8Array) => new TextDecoder().decode(u);
-
-const importAesKey = async (key: string) => {
-    const digest = await crypto.subtle.digest("SHA-1", textEncode(key));
-    const rawKey = new Uint8Array(digest).slice(0, 16);
-    return await crypto.subtle.importKey("raw", rawKey, "AES-CBC", true, ["encrypt", "decrypt"]);
-};
+async function importAesKey(key: string) {
+    const baseKey = await crypto.subtle.importKey("raw", textEncode(key), "PBKDF2", false, ["deriveKey"]);
+    return await crypto.subtle.deriveKey(
+        { name: "PBKDF2", salt: textEncode("@gist/crypto"), iterations: 10000, hash: "SHA-256" },
+        baseKey,
+        { name: "AES-CBC", length: 128 },
+        true,
+        ["encrypt", "decrypt"],
+    );
+}
 
 /** Compute the SHA-256 digest of a string as a lowercase hex string. */
 export async function sha256(message: string): Promise<string> {
