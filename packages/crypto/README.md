@@ -13,10 +13,10 @@ bunx jsr add @gist/crypto
 ## Usage
 
 ```ts
-import { sha1, AES, RSA, JWT } from "@gist/crypto";
+import { sha256, AES, RSA, JWT } from "@gist/crypto";
 
-// SHA-1
-const hash = await sha1("hello");
+// SHA-256
+const hash = await sha256("hello");
 
 // AES encrypt/decrypt
 const encrypted = await AES.encrypt("secret data", "password");
@@ -33,8 +33,8 @@ const payload = await JWT.verify(token, privateKey);
 
 ## API
 
-### `sha1(message: string): Promise<string>`
-Computes the SHA-1 digest as a lowercase hex string.
+### `sha256(message: string): Promise<string>`
+Computes the SHA-256 digest as a lowercase hex string.
 
 ### `AES.encrypt(plaintext: string, key: string): Promise<string>`
 Encrypts `plaintext` with `key` using AES-CBC. Returns `base64(iv).base64(ciphertext)`.

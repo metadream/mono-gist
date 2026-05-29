@@ -21,9 +21,9 @@ const importAesKey = async (key: string) => {
     return await crypto.subtle.importKey("raw", rawKey, "AES-CBC", true, ["encrypt", "decrypt"]);
 };
 
-/** Compute the SHA-1 digest of a string as a lowercase hex string. */
-export async function sha1(message: string): Promise<string> {
-    const buffer = await crypto.subtle.digest("SHA-1", textEncode(message));
+/** Compute the SHA-256 digest of a string as a lowercase hex string. */
+export async function sha256(message: string): Promise<string> {
+    const buffer = await crypto.subtle.digest("SHA-256", textEncode(message));
     const array = Array.from(new Uint8Array(buffer));
     const hex = array.map((b) => b.toString(16).padStart(2, "0")).join("");
     return hex;

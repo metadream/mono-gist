@@ -1,7 +1,7 @@
-import { sha1, AES, RSA, JWT } from "./mod.ts";
+import { sha256, AES, RSA, JWT } from "./mod.ts";
 
-// SHA-1
-console.log("sha1:", await sha1("hello"));
+// SHA-256
+console.log("sha256:", await sha256("hello"));
 
 // AES
 const enc = await AES.encrypt("secret", "pass");
